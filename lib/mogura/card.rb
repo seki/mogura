@@ -20,23 +20,23 @@ class Card
   end
   
   def self.break
-    self.new(:break, "\u{2668}", 5, :recovery, 2)
+    self.new([:break], "\u{2668}", 5, :recovery, 2)
   end
 
   def self.map
-    self.new(:map, 'map', 4, :search_candy, 2)
+    self.new([:map], 'map', 4, :search_candy, 2)
   end
 
   def self.kanban
-    self.new(:kanban, 'kanban', 2, :search_gift, 1)
+    self.new([:kanban], 'kanban', 2, :search_gift, 1)
   end
 
   def self.candy
-    self.new(:candy, "candy", 2, :get, 2)
+    self.new([:candy], "candy", 2, :get, 2)
   end
 
   def self.gift
-    self.new(:gift, "gift", 2, :get, 1)
+    self.new([:gift], "gift", 2, :get, 1)
   end
 
   def self.item(color, item, cost)
@@ -80,7 +80,9 @@ class Card
     @open = open
     @spread = spread
   end
-  attr_reader :ser, :name, :action, :kind
+  attr_reader :ser, :name, :action
+
+  def kind; @kind[0]; end
 
   def to_a
       [@name, "cost: #{@cost}", @action.to_s,
