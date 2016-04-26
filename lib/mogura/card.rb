@@ -60,13 +60,13 @@ class Card
     name = "#{e_color}  #{e_item}  #{cost}"
     case cost
     when 1
-      self.new(:item, name, cost, :get, 2)
+      self.new([color.intern, item.intern], name, cost, :get, 2)
     when 2
-      self.new(:item, name, cost, :get, 3)
+      self.new([color.intern, item.intern], name, cost, :get, 3)
     when 3
-      self.new(:item, name, cost, :get, 5)
+      self.new([color.intern, item.intern], name, cost, :get, 5)
     when 4
-      self.new(:item, name, cost, :get, 7, true)
+      self.new([color.intern, item.intern], name, cost, :get, 7, true)
     end
   end
 
