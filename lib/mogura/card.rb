@@ -199,7 +199,7 @@ class Deck
     end
     @ary = ary.sort_by {rand}
     @bag = @bag + candy
-    @trash << card
+    @bag << card
     @phase = 2
   end
 
@@ -219,7 +219,7 @@ class Deck
     end
     @ary = ary.sort_by {rand}
     @bag = @bag + gift
-    @trash << card
+    @bag << card
     @phase = 2
   end
 
