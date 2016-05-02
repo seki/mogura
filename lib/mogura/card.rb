@@ -81,10 +81,9 @@ class Card
     @action = action
     @open = open
     @spread = spread
-    @order = kind.dup
-    @order[0] = ORDER.index(kind[0])
+    @order = [ORDER.index(kind[0]), kind[1], @cost] 
   end
-  attr_reader :ser, :name, :action, :order
+  attr_reader :ser, :name, :action, :order, :kind, :cost
 
   def candy?
     @kind[0] == :candy
@@ -128,6 +127,7 @@ class Deck
     @code = []
     @hand = nil
     @todo = [[:show, 3], [:outlet_else, nil]]
+    show(3)
   end
   attr_reader :ary, :lost, :bag, :current
   attr_reader :hand
@@ -256,12 +256,6 @@ class Deck
     ary = @lost.shift(5)
     @ary = (@ary + ary).sort_by {rand}
   end
-
-  def do_phase(&blk)
-    @current.do_phase(self, @phase, &blk)
-  end
-
-  def phase; @phase; end
 end
 
 class TestUI
@@ -285,9 +279,37 @@ class TestUI
     @deck.bag
   end
 
+  def emoji(klass)
+    case klass
+    when :red
+      "\u{1f49c}"
+    when :blue
+      "\u{1f499}"
+    when :yellow
+      "\u{1f49b}"
+    when :glasses
+      "\u{1F576}"
+    when :necklace
+      "\u{1f4ff}"
+    when :bag
+      "\u{1f45c}"
+    else
+      klass.to_s
+    end
+  end
+
+  def cards_to_summary(first, ary)
+    case first
+    when :red, :yellow, :blue
+      (['*', emoji(first), ''] + ary.map {|x| "#{emoji(x.kind[1])}  #{x.cost}"}).join(' ')
+    else
+      "* #{ary.map{|x| x.name}.join(' ')}"
+    end
+  end
+
   def area_summary(area)
-    area.sort_by {|x| x.order}.chunk {|x| x.name[0]}.each {|first, ary|
-      puts "* #{ary.map{|x| x.name}.join(' ')}"
+    area.sort_by {|x| x.order}.chunk {|x| x.kind[0]}.each {|first, ary|
+      puts cards_to_summary(first, ary)
     }
   end
 
