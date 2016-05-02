@@ -1,6 +1,8 @@
 class Card
   @@ser = 0
 
+  ORDER = [:candy, :gift, :map, :kanban, :break, :yellow, :red, :blue]
+
   def self.create_from_line(line)
     ary = line.split(' ')
     case ary[0]
@@ -79,10 +81,18 @@ class Card
     @action = action
     @open = open
     @spread = spread
+    @order = kind.dup
+    @order[0] = ORDER.index(kind[0])
   end
-  attr_reader :ser, :name, :action
+  attr_reader :ser, :name, :action, :order
 
-  def kind; @kind[0]; end
+  def candy?
+    @kind[0] == :candy
+  end
+
+  def gift?
+    @kind[0] == :gift
+  end
 
   def to_a
       [@name, "cost: #{@cost}", @action.to_s,
@@ -126,13 +136,18 @@ class Deck
     @phase = nil
     @code = []
   end
+  attr_reader :ary, :lost, :bag, :current
+  
+  def outlet
+    @trash
+  end
 
   def size
     @ary.size
   end
 
   def show(n)
-    @ary.shift(n).sort_by {|x| x.name}
+    @ary.shift(n).sort_by {|x| x.order}
   end
 
   def trash(card)
@@ -185,13 +200,13 @@ class Deck
 
   def search_candy(card)
     puts "## deck"
-    @ary.sort_by {|x| x.name}.chunk {|x| x.name[0]}.each {|first, ary|
+    @ary.sort_by {|x| x.order}.chunk {|x| x.name[0]}.each {|first, ary|
       puts "* #{ary.map{|x| x.name}.join(' ')}"
     }
     ary = []
     candy = []
     @ary.each do |it|
-      if it.kind == :candy && candy.size < 2
+      if it.candy? && candy.size < 2
         candy << it
       else
         ary << it
@@ -205,13 +220,13 @@ class Deck
 
   def search_gift(card)
     puts "## deck"
-    @ary.sort_by {|x| x.name}.chunk {|x| x.name[0]}.each {|first, ary|
+    @ary.sort_by {|x| x.order}.chunk {|x| x.name[0]}.each {|first, ary|
       puts "* #{ary.map{|x| x.name}.join(' ')}"
     }
     ary = []
     gift = []
     @ary.each do |it|
-      if it.kind == :gift && gift.size < 1
+      if it.gift? && gift.size < 1
         gift << it
       else
         ary << it
@@ -224,7 +239,7 @@ class Deck
   end
 
   def do_candy
-    found = @bag.find {|it| it.kind == :candy}
+    found = @bag.find {|it| it.candy?}
     return unless found
     @bag.delete(found)
     @trash << found
@@ -234,7 +249,7 @@ class Deck
   end
 
   def do_gift
-    found = @bag.find {|it| it.kind == :gift}
+    found = @bag.find {|it| it.gift?}
     return unless found
     @bag.delete(found)
     @trash << found
@@ -243,38 +258,66 @@ class Deck
     @ary = (@ary + ary).sort_by {rand}
   end
 
+  def do_phase(&blk)
+    @current.do_phase(self, @phase, &blk)
+  end
+
+  def phase; @phase; end
+end
+
+class TestUI
+  def initialize(deck)
+    @deck = deck
+  end
+
+  def entrance
+    @deck.ary
+  end
+
+  def cost_area
+    @deck.lost
+  end
+
+  def outlet
+    @deck.outlet
+  end
+
+  def memory
+    @deck.bag
+  end
+
   def prompt(&blk)
     puts
-    puts "[deck: #{@ary.size} trash: #{@trash.size} lost: #{@lost.size} bag: #{@bag.size} (#{@ary.size + @trash.size + @lost.size + @bag.size})]"
+    puts "[deck: #{entrance.size} trash: #{outlet.size} lost: #{cost_area.size} bag: #{memory.size} (#{entrance.size + outlet.size + cost_area.size + memory.size})]"
     puts '## trash'
-    @trash.sort_by {|x| x.name}.chunk {|x| x.name[0]}.each {|first, ary|
+    outlet.sort_by {|x| x.order}.chunk {|x| x.name[0]}.each {|first, ary|
       puts "* #{ary.map{|x| x.name}.join(' ')}"
     }
     puts
     puts '## bag'
-    @bag.sort_by {|x| x.name}.chunk {|x| x.name[0]}.each {|first, ary|
+    memory.sort_by {|x| x.order}.chunk {|x| x.name[0]}.each {|first, ary|
       puts "* #{ary.map{|x| x.name}.join(' ')}"
     }
 
     puts
-    @current.to_a.each_with_index do |str, n|
-      if n == @phase + 1
+    @deck.current.to_a.each_with_index do |str, n|
+      if n == @deck.phase + 1
         puts str + " **"
       else
         puts str
       end
     end
     while true
-      puts "[deck: #{@ary.size} trash: #{@trash.size} lost: #{@lost.size} bag: #{@bag.size} (#{@ary.size + @trash.size + @lost.size + @bag.size})]"
+      puts "[deck: #{entrance.size} trash: #{outlet.size} lost: #{cost_area.size} bag: #{memory.size} (#{entrance.size + outlet.size + cost_area.size + memory.size})]"
       cmd = gets.chomp
       case cmd
       when 'c'
-        do_candy
+        @deck.do_candy
       when 'g'
-        do_gift
+        @deck.do_gift
       when 't'
         puts '## trash'
-        @trash.sort_by {|x| x.name}.chunk {|x| x.name[0]}.each {|first, ary|
+        outlet.sort_by {|x| x.order}.chunk {|x| x.name[0]}.each {|first, ary|
           puts "* #{ary.map{|x| x.name}.join(' ')}"
         }
         puts
@@ -283,9 +326,9 @@ class Deck
       end
     end
     begin
-      @current.do_phase(self, @phase, &blk)
-    rescue EmptyError
-      @bag.sort_by {|x| x.name}.each do |card|
+      @deck.do_phase(&blk)
+    rescue Deck::EmptyError
+      memory.sort_by {|x| x.order}.each do |card|
         puts "* #{card.name}"
       end
       exit
@@ -294,6 +337,7 @@ class Deck
 end
 
 deck = Deck.new
+ui = TestUI.new(deck)
 
 deck.open(3) do |hands|
   hands.each_with_index do |card, n|
@@ -309,7 +353,7 @@ deck.open(3) do |hands|
 end
 
 while true
-  deck.prompt do |hands|
+  ui.prompt do |hands|
     hands.each_with_index do |card, n|
       puts "- #{n}: #{card.name}"
     end
