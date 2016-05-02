@@ -103,19 +103,11 @@ class Card
     to_a.join("\n ")
   end
 
-  def do_phase(deck, n, &blk)
-    case n
-    when 0
-      deck.cost(@cost)
-    when 1
-      deck.send(@action, self)
-    when 2
-      if @spread
-        deck.spread(@open, &blk)
-      else
-        deck.open(@open, &blk)
-      end
-    end
+  def todo
+    [[:cost, @cost],
+     [@action, self],
+     [:show, @open],
+     [(@spread ? :spread_else : :outlet_else), nil]]
   end
 end
 
@@ -133,11 +125,17 @@ class Deck
     @trash = []
     @bag = []
     @current = nil
-    @phase = nil
     @code = []
+    @hand = nil
+    @todo = [[:show, 3], [:outlet_else, nil]]
   end
   attr_reader :ary, :lost, :bag, :current
-  
+  attr_reader :hand
+
+  def prompt
+    @todo.first
+  end
+
   def outlet
     @trash
   end
@@ -147,7 +145,10 @@ class Deck
   end
 
   def show(n)
-    @ary.shift(n).sort_by {|x| x.order}
+    raise EmptyError if @ary.empty?
+    @hand = @ary.shift(n).sort_by {|x| x.order}
+  ensure
+    @todo.shift
   end
 
   def trash(card)
@@ -157,37 +158,32 @@ class Deck
   def cost(n)
     raise EmptyError if @ary.size < n
     @lost.push(* @ary.shift(n))
-    @phase = 1
+  ensure
+    @todo.shift
   end
 
-  def open(n)
-    raise EmptyError if @ary.empty?
-    hands = show(n)
-    card = yield(hands)
-    hands.each do |it|
+  def outlet_else(card)
+    @hand.each do |it|
       trash(it) unless it == card
     end
+    @hand = nil
     @current = card
-    @phase = 0
-    card
+    @todo = card.todo
   end
-  
-  def spread(n)
-    raise EmptyError if @ary.empty?
-    hands = show(n)
-    card = yield(hands)
-    hands.each do |it|
+
+  def spread_else(card)
+    @hand.each do |it|
       @ary << it unless it == card
     end
-    @ary = @ary.sort_by {rand}
+    @hand = nil
     @current = card
-    @phase = 0
-    card
+    @todo = card.todo
   end
 
   def get(card)
     @bag << card
-    @phase = 2
+  ensure
+    @todo.shift
   end
 
   def recovery(card)
@@ -195,7 +191,8 @@ class Deck
     @trash = []
     @ary = @ary.sort_by {rand}
     @bag << card
-    @phase = 2
+  ensure
+    @todo.shift
   end
 
   def search_candy(card)
@@ -215,7 +212,8 @@ class Deck
     @ary = ary.sort_by {rand}
     @bag = @bag + candy
     @bag << card
-    @phase = 2
+  ensure
+    @todo.shift
   end
 
   def search_gift(card)
@@ -235,7 +233,8 @@ class Deck
     @ary = ary.sort_by {rand}
     @bag = @bag + gift
     @bag << card
-    @phase = 2
+  ensure
+    @todo.shift
   end
 
   def do_candy
@@ -286,52 +285,67 @@ class TestUI
     @deck.bag
   end
 
-  def prompt(&blk)
+  def area_summary(area)
+    area.sort_by {|x| x.order}.chunk {|x| x.name[0]}.each {|first, ary|
+      puts "* #{ary.map{|x| x.name}.join(' ')}"
+    }
+  end
+
+  def show_hands
+    @deck.hand.each_with_index do |card, n|
+      puts "- #{n}: #{card.name}"
+    end
+    @deck.size
+  end
+
+  def prompt
     puts
-    puts "[deck: #{entrance.size} trash: #{outlet.size} lost: #{cost_area.size} bag: #{memory.size} (#{entrance.size + outlet.size + cost_area.size + memory.size})]"
     puts '## trash'
-    outlet.sort_by {|x| x.order}.chunk {|x| x.name[0]}.each {|first, ary|
-      puts "* #{ary.map{|x| x.name}.join(' ')}"
-    }
-    puts
-    puts '## bag'
-    memory.sort_by {|x| x.order}.chunk {|x| x.name[0]}.each {|first, ary|
-      puts "* #{ary.map{|x| x.name}.join(' ')}"
-    }
+    area_summary(outlet)
 
     puts
-    @deck.current.to_a.each_with_index do |str, n|
-      if n == @deck.phase + 1
-        puts str + " **"
-      else
-        puts str
-      end
+    puts '## bag'
+    area_summary(memory)
+
+    if @deck.current 
+      puts
+      puts @deck.current.to_s 
     end
-    while true
-      puts "[deck: #{entrance.size} trash: #{outlet.size} lost: #{cost_area.size} bag: #{memory.size} (#{entrance.size + outlet.size + cost_area.size + memory.size})]"
-      cmd = gets.chomp
-      case cmd
-      when 'c'
-        @deck.do_candy
-      when 'g'
-        @deck.do_gift
-      when 't'
-        puts '## trash'
-        outlet.sort_by {|x| x.order}.chunk {|x| x.name[0]}.each {|first, ary|
-          puts "* #{ary.map{|x| x.name}.join(' ')}"
-        }
-        puts
-      else
-        break
-      end
+
+    kind, opt = @deck.prompt
+    case kind
+    when :spread_else, :outlet_else
+      show_hands
+    else
+      puts "[#{kind}] / Candy / Gift"
     end
-    begin
-      @deck.do_phase(&blk)
-    rescue Deck::EmptyError
-      memory.sort_by {|x| x.order}.each do |card|
-        puts "* #{card.name}"
+
+    puts "[deck: #{entrance.size} trash: #{outlet.size} lost: #{cost_area.size} bag: #{memory.size} (#{entrance.size + outlet.size + cost_area.size + memory.size})]"
+    cmd = gets.chomp
+    case cmd
+    when 'c'
+      @deck.do_candy
+    when 'g'
+      @deck.do_gift
+    else
+      case kind
+      when :spread_else, :outlet_else
+        num = Integer(cmd) rescue nil
+        return unless num
+        if (0...(@deck.hand.size)) === num
+          card = @deck.hand[num]
+          @deck.send(kind, card)
+        end
+      else
+        begin
+          @deck.send(kind, opt)
+        rescue Deck::EmptyError
+          memory.sort_by {|x| x.order}.each do |card|
+            puts "* #{card.name}"
+          end
+          exit
+        end
       end
-      exit
     end
   end
 end
@@ -339,32 +353,8 @@ end
 deck = Deck.new
 ui = TestUI.new(deck)
 
-deck.open(3) do |hands|
-  hands.each_with_index do |card, n|
-    puts "- #{n}: #{card.name}"
-  end
-  n = 0
-  while true
-    n = Integer(gets.chomp) rescue nil
-    next unless n
-    break if (0...(hands.size)) === n
-  end
-  hands[n]
-end
-
 while true
-  ui.prompt do |hands|
-    hands.each_with_index do |card, n|
-      puts "- #{n}: #{card.name}"
-    end
-    n = 0
-    while true
-      n = Integer(gets.chomp) rescue nil
-      next unless n
-      break if (0...(hands.size)) === n
-    end
-    hands[n]
-  end
+  ui.prompt
 end
 
 __END__
