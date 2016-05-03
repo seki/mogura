@@ -113,13 +113,75 @@ end
 class Deck
   class EmptyError < RuntimeError; end
 
+  CARDS = <<EOS
+break
+break
+break
+break
+break
+break
+yellow glasses 1
+yellow necklace 1
+yellow bag 1
+yellow glasses 4
+yellow necklace 4
+yellow bag 4
+yellow glasses 2
+yellow necklace 2
+yellow bag 2
+yellow glasses 3
+yellow necklace 3
+yellow bag 3
+blue glasses 2
+blue necklace 2
+blue bag 2
+blue glasses 1
+blue necklace 1
+blue bag 1
+blue glasses 4
+blue necklace 4
+blue bag 4
+blue glasses 3
+blue necklace 3
+blue bag 3
+red glasses 2
+red necklace 2
+red bag 2
+red glasses 4
+red necklace 4
+red bag 4
+red glasses 1
+red necklace 1
+red bag 1
+red glasses 3
+red necklace 3
+red bag 3
+candy
+candy
+candy
+candy
+candy
+candy
+candy
+candy
+gift
+gift
+gift
+gift
+map
+map
+map
+map
+kanban
+kanban
+EOS
+
+  @@cards = CARDS.split("\n").map do |line|
+    Card.create_from_line(line.chomp)
+  end
+
   def initialize
-    @ary = []
-    fp = DATA
-    while line = fp.gets
-      @ary << Card.create_from_line(line.chomp)
-    end
-    @ary = @ary.sort_by {rand}
+    @ary = @@cards.sort_by {rand}
     @lost = []
     @trash = []
     @bag = []
@@ -183,6 +245,7 @@ class Deck
   def get(card)
     @bag << card
   ensure
+    @current = nil
     @todo.shift
   end
 
@@ -192,6 +255,7 @@ class Deck
     @ary = @ary.sort_by {rand}
     @bag << card
   ensure
+    @current = nil
     @todo.shift
   end
 
@@ -213,6 +277,7 @@ class Deck
     @bag = @bag + candy
     @bag << card
   ensure
+    @current = nil
     @todo.shift
   end
 
@@ -234,6 +299,7 @@ class Deck
     @bag = @bag + gift
     @bag << card
   ensure
+    @current = nil
     @todo.shift
   end
 
@@ -372,71 +438,13 @@ class TestUI
   end
 end
 
+=begin
 deck = Deck.new
 ui = TestUI.new(deck)
+more_ui = CardUI.new(deck)
 
 while true
   ui.prompt
+  more_ui.write_to_html
 end
-
-__END__
-break
-break
-break
-break
-break
-break
-yellow glasses 1
-yellow necklace 1
-yellow bag 1
-yellow glasses 4
-yellow necklace 4
-yellow bag 4
-yellow glasses 2
-yellow necklace 2
-yellow bag 2
-yellow glasses 3
-yellow necklace 3
-yellow bag 3
-blue glasses 1
-blue necklace 1
-blue bag 1
-blue glasses 4
-blue necklace 4
-blue bag 4
-blue glasses 3
-blue necklace 3
-blue bag 3
-blue glasses 2
-blue necklace 2
-blue bag 2
-red glasses 2
-red necklace 2
-red bag 2
-red glasses 4
-red necklace 4
-red bag 4
-red glasses 1
-red necklace 1
-red bag 1
-red glasses 3
-red necklace 3
-red bag 3
-candy
-candy
-candy
-candy
-candy
-candy
-candy
-candy
-gift
-gift
-gift
-gift
-map
-map
-map
-map
-kanban
-kanban
+=end
