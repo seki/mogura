@@ -9,7 +9,11 @@ module Mogura
       @base = BaseTofu.new(self)
       start_game
     end
-    attr_reader :deck, :finish
+    attr_reader :deck
+
+    def finish?
+      @finish || (@deck.prompt.first == :show && @deck.ary.empty?)
+    end
 
     def start_game
       @deck = Deck.new
@@ -38,7 +42,9 @@ module Mogura
      <body>
      <%= @main.to_html(context) %>
      <p align='right'><%=a('new', {}, context)%>はじめから</a></p>
-     <p align='right'><%=h @session.deck.prompt.first %></p>
+     <% @session.deck.summary.to_a.each do |it| %>
+     <p align='right'><%=h it.join(" = ") %></p>
+     <% end %>
      </body>
      </html>
     EOS
@@ -55,7 +61,7 @@ module Mogura
 
   class MainTofu < Tofu::Tofu
     ERB.new(<<-EOS).def_method(self, 'to_html(context)')
-<% if @session.finish %>
+<% if @session.finish? %>
 <p align='center'>FINISH</p>
 <% end %>
 <div class='entrance' width=640>
@@ -123,7 +129,8 @@ module Mogura
 </div>
 
 <div class='red'>
-<% ary = memory(:red) %>
+<% ary = memory(:red, @session.finish?) %>
+<% ary = ary.sort_by {|x| x.order} if @session.finish? %>
 <% stack_y_pos(ary.size, 240, :large) do |y| %>
 <%  card = ary.shift %>
 <img src='<%= "%03d" % card.ser %>.png' style='position:absolute; top:<%= y%>px; left:520px' border=2/>
@@ -131,7 +138,7 @@ module Mogura
 </div>
 
 <div class='yellow'>
-<% ary = memory(:yellow) %>
+<% ary = memory(:yellow, @session.finish?) %>
 <% stack_y_pos(ary.size, 240, :large) do |y| %>
 <%  card = ary.shift %>
 <img src='<%= "%03d" % card.ser %>.png' style='position:absolute; top:<%= y%>px; left:690px' border=2/>
@@ -139,7 +146,7 @@ module Mogura
 </div>
 
 <div class='blue'>
-<% ary = memory(:blue) %>
+<% ary = memory(:blue, @session.finish?) %>
 <% stack_y_pos(ary.size, 240, :large) do |y| %>
 <%  card = ary.shift %>
 <img src='<%= "%03d" % card.ser %>.png' style='position:absolute; top:<%= y%>px; left:860px' border=2/>
@@ -184,9 +191,11 @@ module Mogura
       @session.deck.prompt.first
     end
     
-    def memory(kind=nil)
+    def memory(kind=nil, ordered=false)
       return @session.deck.bag unless kind
-      @session.deck.bag.find_all {|x| x.kind[0] == kind}
+      ary = @session.deck.bag.find_all {|x| x.kind[0] == kind}
+      ary = ary.sort_by {|x| x.order} if ordered
+      ary
     end
     
     def initialize(session)
@@ -194,7 +203,7 @@ module Mogura
     end
     
     def do_choose(context, params)
-      return if @session.finish
+      return if @session.finish?
       deck = @session.deck
       kind, opt = deck.prompt
       case kind
@@ -210,7 +219,7 @@ module Mogura
     end
 
     def do_it(context, params)
-      return if @session.finish
+      return if @session.finish?
       deck = @session.deck
       kind, opt = deck.prompt
       case kind
@@ -226,13 +235,13 @@ module Mogura
     end
 
     def do_candy(context, params)
-      return if @session.finish
+      return if @session.finish?
       deck = @session.deck
       deck.do_candy
     end
     
     def do_gift(context, params)
-      return if @session.finish
+      return if @session.finish?
       deck = @session.deck
       deck.do_gift
     end
@@ -250,20 +259,20 @@ module Mogura
       h = start
       case step
       when :small
-        d1, d2 = 2, 10
+        d1, d2, bin = 2, 10, 10
       when :large
-        d1, d2 = 3, 55
+        d1, d2, bin = 3, 55, 100
       else
-        d1, d2 = 3, 15
+        d1, d2, bin = 3, 15, 10
       end
-      (size / 10).times do
+      (size / bin).times do
         10.times do
           yield(h)
           h += d1
         end
-        h += 1
+        h += 2
       end
-      (size % 10).times do
+      (size % bin).times do
         yield(h)
         h += d2
       end

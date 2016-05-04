@@ -1,7 +1,7 @@
 class Card
   @@ser = 0
 
-  ORDER = [:candy, :gift, :map, :kanban, :break, :yellow, :red, :blue]
+  ORDER = [:gift, :candy, :map, :kanban, :break, :red, :yellow, :blue]
 
   def self.create_from_line(line)
     ary = line.split(' ')
@@ -260,10 +260,6 @@ EOS
   end
 
   def search_candy(card)
-    puts "## deck"
-    @ary.sort_by {|x| x.order}.chunk {|x| x.name[0]}.each {|first, ary|
-      puts "* #{ary.map{|x| x.name}.join(' ')}"
-    }
     ary = []
     candy = []
     @ary.each do |it|
@@ -282,10 +278,6 @@ EOS
   end
 
   def search_gift(card)
-    puts "## deck"
-    @ary.sort_by {|x| x.order}.chunk {|x| x.name[0]}.each {|first, ary|
-      puts "* #{ary.map{|x| x.name}.join(' ')}"
-    }
     ary = []
     gift = []
     @ary.each do |it|
@@ -321,6 +313,22 @@ EOS
     @lost = @lost.sort_by {rand}
     ary = @lost.shift(5)
     @ary = (@ary + ary).sort_by {rand}
+  end
+
+  def summary
+    bin = @bag.inject(Hash.new(0)) {|h, x| h[x.kind] += 1; h}
+    result = {
+      :candy => bin[[:candy]],
+      :gift => bin[[:gift]],
+      :break => bin[[:break]]
+    }
+    colors = [:red, :yellow, :blue]
+    items = [:glasses, :necklace, :bag]
+    colors.each do |color|
+      result[color] = items.map {|item| bin[[color, item]]}.min
+    end
+    result[:tricolor] = colors.map {|color| result[color]}.min
+    result
   end
 end
 
@@ -437,14 +445,3 @@ class TestUI
     end
   end
 end
-
-=begin
-deck = Deck.new
-ui = TestUI.new(deck)
-more_ui = CardUI.new(deck)
-
-while true
-  ui.prompt
-  more_ui.write_to_html
-end
-=end
