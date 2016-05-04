@@ -12,7 +12,7 @@ module Mogura
     attr_reader :deck
 
     def finish?
-      @finish || (@deck.prompt.first == :show && @deck.ary.empty?)
+      @finish
     end
 
     def start_game
