@@ -1,0 +1,339 @@
+<html>
+    <head>
+        <style>
+.mog-card {
+    position: absolute;
+    -moz-border-radius:10px;
+    -webkit-border-radius:10px;
+    border-radius:10px;
+    border: thin solid black;
+}
+
+.mog-card.mog-prompt-cost  {
+    transform: rotate(350deg);
+}
+
+.mog-card.mog-prompt-else  {
+    transform: rotate(10deg);
+}
+
+.mog-card.mog-entrance  {
+    -moz-border-radius:5px;
+    -webkit-border-radius:5px;
+    border-radius:5px;
+    transform: scale(0.5, 0.5);
+}
+
+.mog-card.mog-costarea  {
+    -moz-border-radius:5px;
+    -webkit-border-radius:5px;
+    border-radius:5px;
+    transform: rotate(270deg) scale(0.5, 0.5);
+}
+
+.mog-card.mog-outlet  {
+    -moz-border-radius:5px;
+    -webkit-border-radius:5px;
+    border-radius:5px;
+    transform: rotate(270deg) scale(0.5, 0.5);
+}
+
+        </style>
+    </head>
+<body>
+
+<div class="mog-field">
+<% card = "001" %>
+<% 60.times do |n|  %>
+<img class="mog-card" draggable=false id="mog-<%= card %>" src='ura.png' />
+<% card = card.succ %>
+<% end %>
+</div>
+
+</body>
+<script>
+
+var mogura = (function () {
+    var load_state = (function(url) {
+        var x;
+        try {
+            x = new ActiveXObject("Msxml2.XMLHTTP");
+        } catch (e) {
+	        try {
+                x = new ActiveXObject("Microsoft.XMLHTTP");
+	        } catch (e) {
+                x = null;
+            }
+        }
+        if (!x && typeof XMLHttpRequest != "undefined") {
+            x = new XMLHttpRequest();
+        }
+        if (x) {
+            x.onreadystatechange = function() {
+                if (x.readyState == 4 && x.status == 200) {
+                    var state = JSON.parse(x.responseText);
+                    apply_state(state);
+               }
+            }
+            x.open("GET", url);
+            x.send(null);
+        }
+    });
+
+    var apply_state = (function ( state ) {
+        put_entrance(state.entrance);
+        put_hand(state.hand);
+        put_current(state.current, state.prompt);
+        put_outlet(state.outlet);
+        put_costarea(state.costarea);
+    	put_candy(state.candy);
+        put_gift(state.gift);
+        put_map(state.map);
+        put_kanban(state.kanban);
+        put_break(state.break);
+        put_red(state.red);
+        put_yellow(state.yellow);
+        put_blue(state.blue);
+    });
+
+    var put_entrance = (function (cards) {
+        var y = -20, z = 1, last;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            last = card;
+            card.src = "ura.png";
+            card.className = "mog-card mog-entrance";
+            card.style.top = y;
+            card.style.left = 195;
+            card.style.zIndex = z;
+            card.draggable = false;
+            card.onclick = null;
+            z = z + 1;
+            y = y + 2;
+            if ( z % 10 === 1 ) { y = y + 2;}
+        });
+        if ( last ) {
+            last.onclick = function () {
+                load_state('/api/?tofu_id=api;tofu_cmd=it');
+            };
+        }
+    });
+
+    var put_costarea = (function (cards) {
+        var y = -20, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = "ura.png";
+            card.className = "mog-card mog-costarea";
+            card.style.top = y;
+            card.style.left = 100;
+            card.style.zIndex = z;
+            card.draggable = false;
+            card.onclick = null;
+            z = z + 1;
+            y = y + 2;
+            if ( z % 10 === 1 ) { y = y + 2;}
+        });
+    });    
+
+    var put_outlet = (function (cards) {
+        var y = -20, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = name + ".png";
+            card.className = "mog-card mog-outlet";
+            card.style.top = y;
+            card.style.left = -10;
+            card.style.zIndex = z;
+            card.draggable = false;
+            card.onclick = null;
+            z = z + 1;
+            y = y + 2;
+            if ( z % 10 === 1 ) { y = y + 2;}
+        });
+    });
+
+    var put_hand = (function (cards) {
+        var x = 400, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = name + ".png";
+            card.className = "mog-card"
+            card.style.top = 20;
+            card.style.left = x;
+            card.style.zIndex = z;
+            card.draggable = true;
+            {
+                var url = '/api/?tofu_id=api;tofu_cmd=choose;opt=' + (z - 1);
+                card.onclick = function () {
+                    load_state(url);
+                };
+            };
+            x = x + 125;
+            z = z + 1;
+        });
+    });
+
+    var put_current = (function (cards, prompt) {
+        var x = 400, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = name + ".png";
+            if ( prompt == 'cost' ) {
+                card.className = "mog-card mog-prompt-cost"
+            } else {
+                card.className = "mog-card mog-prompt-else"
+            }
+            card.style.top = 20;
+            card.style.left = x;
+            card.style.zIndex = z;
+            card.draggable = true;
+            card.onclick = function () {
+                load_state('/api/?tofu_id=api;tofu_cmd=it');
+            };
+            x = x + 125;
+            z = z + 1;
+        });
+    });
+
+    var put_candy = (function (cards) {
+        var y = 240, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = name + ".png";
+            card.className = "mog-card";
+            card.style.top = y;
+            card.style.left = 10;
+            card.style.zIndex = z;
+            card.draggable = false;
+            card.onclick = function () {
+                load_state('/api/?tofu_id=api;tofu_cmd=candy');
+            };
+            z = z + 1;
+            y = y + 15;
+        });
+    });
+
+    var put_gift = (function (cards) {
+        var y = 240, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = name + ".png";
+            card.className = "mog-card";
+            card.style.top = y;
+            card.style.left = 180;
+            card.style.zIndex = z;
+            card.draggable = false;
+            card.onclick = function () {
+                load_state('/api/?tofu_id=api;tofu_cmd=gift');
+            };
+            z = z + 1;
+            y = y + 15;
+        });
+    });
+
+    var put_map = (function (cards) {
+        var y = 530, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = name + ".png";
+            card.className = "mog-card";
+            card.style.top = y;
+            card.style.left = 10;
+            card.style.zIndex = z;
+            card.draggable = false;
+            card.onclick = null;
+            z = z + 1;
+            y = y + 15;
+        });
+    });
+
+    var put_kanban = (function (cards) {
+        var y = 530, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = name + ".png";
+            card.className = "mog-card";
+            card.style.top = y;
+            card.style.left = 180;
+            card.style.zIndex = z;
+            card.draggable = false;
+            card.onclick = null;
+            z = z + 1;
+            y = y + 15;
+        });
+    });
+
+    var put_break = (function (cards) {
+        var y = 240, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = name + ".png";
+            card.className = "mog-card";
+            card.style.top = y;
+            card.style.left = 350;
+            card.style.zIndex = z;
+            card.draggable = false;
+            card.onclick = null;
+            z = z + 1;
+            y = y + 55;
+        });
+    });
+
+    var put_red = (function (cards) {
+        var y = 240, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = name + ".png";
+            card.className = "mog-card";
+            card.style.top = y;
+            card.style.left = 520;
+            card.style.zIndex = z;
+            card.draggable = false;
+            card.onclick = null;
+            z = z + 1;
+            y = y + 55;
+        });
+    });
+
+    var put_yellow = (function (cards) {
+        var y = 240, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = name + ".png";
+            card.className = "mog-card";
+            card.style.top = y;
+            card.style.left = 690;
+            card.style.zIndex = z;
+            card.draggable = false;
+            card.onclick = null;
+            z = z + 1;
+            y = y + 55;
+        });
+    });
+
+    var put_blue = (function (cards) {
+        var y = 240, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = name + ".png";
+            card.className = "mog-card";
+            card.style.top = y;
+            card.style.left = 860;
+            card.style.zIndex = z;
+            card.draggable = false;
+            card.onclick = null;
+            z = z + 1;
+            y = y + 55;
+        });
+    });
+
+    return { 
+        load_state : load_state,
+    };
+})();
+
+mogura.load_state("/api/");
+
+</script>
+</html>
