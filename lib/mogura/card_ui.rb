@@ -2,6 +2,13 @@
 require 'tofu'
 require 'mogura/card'
 
+module OnGC
+  module_function
+  def on_gc(&blk)
+    ObjectSpace.define_finalizer(Object.new, &blk)
+  end
+end
+
 module Mogura
   class MoguraSession < Tofu::Session
     def initialize(bartender, hint='')
@@ -56,6 +63,8 @@ module Mogura
 
     def do_new(context, params)
       @session.start_game
+      @on_gc = nil
+      OnGC.on_gc {@on_gc = [Time.now, Thread.current].inspect}
     end
   end
 
@@ -252,6 +261,27 @@ module Mogura
         'transform: rotate(350deg);'
       else
         'transform: rotate(10deg);'
+      end
+    end
+
+    def card_pos_xy(kind)
+      case kind
+      when :candy
+        [10, 240]
+      when :gift
+        [180, 240]
+      when :map
+        [10, 530]
+      when :kanban
+        [180, 240]
+      when :break
+        [350, 240]
+      when :red
+        [520, 240]
+      when :yellow
+        [690, 240]
+      when :blue
+        [860, 240]
       end
     end
     

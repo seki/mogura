@@ -295,24 +295,21 @@ EOS
     @todo.shift
   end
 
-  def do_candy
-    found = @bag.find {|it| it.candy?}
-    return unless found
-    @bag.delete(found)
-    @trash << found
-    @lost = @lost.sort_by {rand}
-    ary = @lost.shift(4)
-    @ary = (@ary + ary).sort_by {rand}
-  end
-
-  def do_gift
-    found = @bag.find {|it| it.gift?}
+  def do_candy_or_gift(found)
     return unless found
     @bag.delete(found)
     @trash << found
     @lost = @lost.sort_by {rand}
     ary = @lost.shift(5)
     @ary = (@ary + ary).sort_by {rand}
+  end
+
+  def do_candy
+    do_candy_or_gift(@bag.find {|it| it.candy?})
+  end
+
+  def do_gift
+    do_candy_or_gift(@bag.find {|it| it.gift?})
   end
 
   def summary
@@ -328,6 +325,9 @@ EOS
       result[color] = items.map {|item| bin[[color, item]]}.min
     end
     result[:tricolor] = colors.map {|color| result[color]}.min
+    result[:score] = result[:candy] + result[:gift] * 2 +
+      (result[:red] + result[:yellow] + result[:blue]) * 3 +
+      result[:break] + result[:tricolor] * 2
     result
   end
 end
