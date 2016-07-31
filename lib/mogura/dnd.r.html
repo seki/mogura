@@ -1,16 +1,28 @@
 <html>
     <head>
         <style>
+.mog-menu {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200;
+}
+
 .mog-card {
     position: absolute;
     -moz-border-radius:10px;
     -webkit-border-radius:10px;
     border-radius:10px;
     border: thin solid black;
+    transition: 100ms;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }
 
 .mog-card.mog-prompt-cost  {
-    transform: rotate(350deg);
+    transform: rotate(-10deg);
 }
 
 .mog-card.mog-prompt-else  {
@@ -28,20 +40,28 @@
     -moz-border-radius:5px;
     -webkit-border-radius:5px;
     border-radius:5px;
-    transform: rotate(270deg) scale(0.5, 0.5);
+    transform: rotate(-90deg) scale(0.5, 0.5);
 }
 
 .mog-card.mog-outlet  {
     -moz-border-radius:5px;
     -webkit-border-radius:5px;
     border-radius:5px;
-    transform: rotate(270deg) scale(0.5, 0.5);
+    transform: rotate(-90deg) scale(0.5, 0.5);
+}
+
+.mog-card.mog-outlet-ex  {
+    transition: 300ms;
+    border: 2px solid black;
 }
 
         </style>
     </head>
 <body>
 
+<div class="mog-menu">
+    <div id="mog-new">はじめから</div>
+</div>
 <div class="mog-field">
 <% card = "001" %>
 <% 60.times do |n|  %>
@@ -54,6 +74,8 @@
 <script>
 
 var mogura = (function () {
+    var last_state = null;
+
     var load_state = (function(url) {
         var x;
         try {
@@ -81,7 +103,7 @@ var mogura = (function () {
     });
 
     var apply_state = (function ( state ) {
-        put_entrance(state.entrance);
+        put_entrance(state.entrance, state.prompt);
         put_hand(state.hand);
         put_current(state.current, state.prompt);
         put_outlet(state.outlet);
@@ -94,10 +116,59 @@ var mogura = (function () {
         put_red(state.red);
         put_yellow(state.yellow);
         put_blue(state.blue);
+        last_state = state;
     });
 
-    var put_entrance = (function (cards) {
-        var y = -20, z = 1, last;
+    var put_entrance_ex = (function (cards) {
+        var x = 20, y = 50, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = name + ".png";
+            card.className = "mog-card"
+            card.style.top = y;
+            card.style.left = x;
+            card.style.zIndex = 60 + z;
+            card.draggable = true;
+            card.onclick = function () {
+                load_state('/api/?tofu_id=api;tofu_cmd=it');
+            };
+            x = x + 125;
+            z = z + 1;
+            if ( z % 10 === 1 ) { y = y + 200 ; x = 20}
+        });        
+    });
+
+    var put_outlet_ex = (function (cards) {
+        var x = 20, y = 50, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = name + ".png";
+            card.className = "mog-card"
+            card.style.top = y;
+            card.style.left = x;
+            card.style.zIndex = 60 + z;
+            card.draggable = true;
+            card.onclick = function () {
+                apply_state(last_state);
+            };
+            x = x + 125;
+            z = z + 1;
+            if ( z % 10 === 1 ) { y = y + 200 ; x = 20}
+        });        
+    });    
+
+    var put_entrance = (function (cards, prompt) {
+        if ( prompt == 'search_candy' ) {
+            put_entrance_ex(cards);
+        } else if ( prompt == 'search_gift' ) {
+            put_entrance_ex(cards);
+        } else {
+            put_entrance_tail(cards);
+        }
+    });
+
+    var put_entrance_tail = (function (cards) {
+        var y = -30, z = 1, last;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
             last = card;
@@ -120,7 +191,7 @@ var mogura = (function () {
     });
 
     var put_costarea = (function (cards) {
-        var y = -20, z = 1;
+        var y = -40, z = 1;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
             card.src = "ura.png";
@@ -137,7 +208,7 @@ var mogura = (function () {
     });    
 
     var put_outlet = (function (cards) {
-        var y = -20, z = 1;
+        var y = -40, z = 1;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
             card.src = name + ".png";
@@ -146,7 +217,9 @@ var mogura = (function () {
             card.style.left = -10;
             card.style.zIndex = z;
             card.draggable = false;
-            card.onclick = null;
+            card.onclick = function () {
+                put_outlet_ex(last_state.outlet);
+            };
             z = z + 1;
             y = y + 2;
             if ( z % 10 === 1 ) { y = y + 2;}
@@ -327,6 +400,10 @@ var mogura = (function () {
             y = y + 55;
         });
     });
+
+    document.getElementById('mog-new').onclick = function () {
+        load_state('/api/?tofu_id=api;tofu_cmd=new');
+    };
 
     return { 
         load_state : load_state,
