@@ -43,6 +43,13 @@ module Mogura
       [:candy, :map, :gift, :kanban, :break, :red, :yellow, :blue].each do |key|
         h[key] = as_card_name(memory(key))
       end
+      more = case it = @deck.prompt.last
+      when Card
+        it.ser
+      else
+        it
+      end
+      p [@deck.prompt.first, it]
       h[:prompt] = @deck.prompt.first
       p [:prompt, h[:prompt]]
       h
