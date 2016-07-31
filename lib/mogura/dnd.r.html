@@ -74,7 +74,7 @@
 <script>
 
 var mogura = (function () {
-    var last_state = null;
+    var last_state = {};
 
     var load_state = (function(url) {
         var x;
@@ -103,7 +103,7 @@ var mogura = (function () {
     });
 
     var apply_state = (function ( state ) {
-        put_entrance(state.entrance, state.prompt);
+        put_entrance(state.entrance, last_state.prompt);
         put_hand(state.hand);
         put_current(state.current, state.prompt);
         put_outlet(state.outlet);
@@ -120,7 +120,7 @@ var mogura = (function () {
     });
 
     var put_entrance_ex = (function (cards) {
-        var x = 20, y = 50, z = 1;
+        var x = 270, y = 50, z = 1;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
             card.src = name + ".png";
@@ -130,11 +130,11 @@ var mogura = (function () {
             card.style.zIndex = 60 + z;
             card.draggable = true;
             card.onclick = function () {
-                load_state('/api/?tofu_id=api;tofu_cmd=it');
+                apply_state(last_state);
             };
             x = x + 125;
             z = z + 1;
-            if ( z % 10 === 1 ) { y = y + 200 ; x = 20}
+            if ( z % 8 === 1 ) { y = y + 180 ; x = 270}
         });        
     });
 
@@ -153,7 +153,7 @@ var mogura = (function () {
             };
             x = x + 125;
             z = z + 1;
-            if ( z % 10 === 1 ) { y = y + 200 ; x = 20}
+            if ( z % 10 === 1 ) { y = y + 180 ; x = 20}
         });        
     });    
 
@@ -270,39 +270,49 @@ var mogura = (function () {
     });
 
     var put_candy = (function (cards) {
-        var y = 240, z = 1;
+        var y = 240, z = 1, last;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
+            last = card;
             card.src = name + ".png";
             card.className = "mog-card";
             card.style.top = y;
             card.style.left = 10;
             card.style.zIndex = z;
             card.draggable = false;
-            card.onclick = function () {
-                load_state('/api/?tofu_id=api;tofu_cmd=candy');
-            };
+            card.onclick = null;
             z = z + 1;
             y = y + 15;
         });
+        if ( last ) {
+            last.onclick = function () {
+                last_state = {};
+                load_state('/api/?tofu_id=api;tofu_cmd=candy');
+            };
+        }
     });
 
     var put_gift = (function (cards) {
-        var y = 240, z = 1;
+        var y = 240, z = 1, last;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
+            last = card;
             card.src = name + ".png";
             card.className = "mog-card";
             card.style.top = y;
             card.style.left = 180;
             card.style.zIndex = z;
             card.draggable = false;
-            card.onclick = function () {
-                load_state('/api/?tofu_id=api;tofu_cmd=gift');
-            };
+            card.onclick = null;
             z = z + 1;
             y = y + 15;
         });
+        if ( last ) {
+            last.onclick = function () {
+                last_state = {};
+                load_state('/api/?tofu_id=api;tofu_cmd=gift');
+            };
+        }
     });
 
     var put_map = (function (cards) {
