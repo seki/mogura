@@ -93,6 +93,10 @@ class Card
     @kind[0] == :gift
   end
 
+  def item?
+    [:blue, :red, :yellow].include?(@kind[0])
+  end
+
   def to_a
       [@name, "cost: #{@cost}", @action.to_s,
        (@spread ? 'spread' : 'open') +  ": #{@open}"]
@@ -185,13 +189,14 @@ EOS
     @lost = []
     @trash = []
     @bag = []
+    @used = []
     @current = nil
     @code = []
     @hand = nil
     @todo = [[:show, 3], [:outlet_else, nil]]
     show(3)
   end
-  attr_reader :ary, :lost, :bag, :current
+  attr_reader :ary, :lost, :current, :used, :bag
   attr_reader :hand
 
   def prompt
@@ -224,6 +229,14 @@ EOS
     @todo.shift
   end
 
+  def prize(card)
+    if @trash.delete(card)
+      @ary << card
+    end
+  ensure
+    @todo.shift
+  end
+
   def outlet_else(card)
     @hand.each do |it|
       trash(it) unless it == card
@@ -242,8 +255,27 @@ EOS
     @todo = card.todo
   end
 
+  def try_combo(card)
+    return false unless card.item?
+    found = [:bag, :glasses, :necklace].find_all {|x| x != card.kind[1]}.inject([]) do |ary, y|
+      it = @bag.find {|z| z.kind == [card.kind[0], y]}
+      ary + [it].compact
+    end
+    return false if found.size != 2
+    @bag.delete(found[0])
+    @bag.delete(found[1])
+    @used << found[0]
+    @used << found[1]
+    @used << card
+  end
+
   def get(card)
-    @bag << card
+    if try_combo(card)
+      @todo[1, 0] = [[:prize, nil]] unless @trash.empty?
+      p [:combo, @todo]
+    else
+      @bag << card
+    end
   ensure
     @current = nil
     @todo.shift
@@ -271,7 +303,7 @@ EOS
     end
     @ary = ary.sort_by {rand}
     @bag = @bag + candy
-    @bag << card
+    @used << card
   ensure
     @current = nil
     @todo.shift
@@ -289,7 +321,7 @@ EOS
     end
     @ary = ary.sort_by {rand}
     @bag = @bag + gift
-    @bag << card
+    @used << card
   ensure
     @current = nil
     @todo.shift
@@ -329,119 +361,5 @@ EOS
       (result[:red] + result[:yellow] + result[:blue]) * 3 +
       result[:break] + result[:tricolor] * 2
     result
-  end
-end
-
-class TestUI
-  def initialize(deck)
-    @deck = deck
-  end
-
-  def entrance
-    @deck.ary
-  end
-
-  def cost_area
-    @deck.lost
-  end
-
-  def outlet
-    @deck.outlet
-  end
-
-  def memory
-    @deck.bag
-  end
-
-  def emoji(klass)
-    case klass
-    when :red
-      "\u{1f49c}"
-    when :blue
-      "\u{1f499}"
-    when :yellow
-      "\u{1f49b}"
-    when :glasses
-      "\u{1F576}"
-    when :necklace
-      "\u{1f4ff}"
-    when :bag
-      "\u{1f45c}"
-    else
-      klass.to_s
-    end
-  end
-
-  def cards_to_summary(first, ary)
-    case first
-    when :red, :yellow, :blue
-      (['*', emoji(first), ''] + ary.map {|x| "#{emoji(x.kind[1])}  #{x.cost}"}).join(' ')
-    else
-      "* #{ary.map{|x| x.name}.join(' ')}"
-    end
-  end
-
-  def area_summary(area)
-    area.sort_by {|x| x.order}.chunk {|x| x.kind[0]}.each {|first, ary|
-      puts cards_to_summary(first, ary)
-    }
-  end
-
-  def show_hands
-    @deck.hand.each_with_index do |card, n|
-      puts "- #{n}: #{card.name}"
-    end
-    @deck.size
-  end
-
-  def prompt
-    puts
-    puts '## trash'
-    area_summary(outlet)
-
-    puts
-    puts '## bag'
-    area_summary(memory)
-
-    if @deck.current 
-      puts
-      puts @deck.current.to_s 
-    end
-
-    kind, opt = @deck.prompt
-    case kind
-    when :spread_else, :outlet_else
-      show_hands
-    else
-      puts "[#{kind}] / Candy / Gift"
-    end
-
-    puts "[deck: #{entrance.size} trash: #{outlet.size} lost: #{cost_area.size} bag: #{memory.size} (#{entrance.size + outlet.size + cost_area.size + memory.size})]"
-    cmd = gets.chomp
-    case cmd
-    when 'c'
-      @deck.do_candy
-    when 'g'
-      @deck.do_gift
-    else
-      case kind
-      when :spread_else, :outlet_else
-        num = Integer(cmd) rescue nil
-        return unless num
-        if (0...(@deck.hand.size)) === num
-          card = @deck.hand[num]
-          @deck.send(kind, card)
-        end
-      else
-        begin
-          @deck.send(kind, opt)
-        rescue Deck::EmptyError
-          memory.sort_by {|x| x.order}.each do |card|
-            puts "* #{card.name}"
-          end
-          exit
-        end
-      end
-    end
   end
 end

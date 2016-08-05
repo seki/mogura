@@ -26,22 +26,26 @@ module Mogura
       (ary || []).map {|card| "%03d" % card.ser}
     end
 
-    def memory(kind=nil, ordered=false)
-      return @deck.bag unless kind
-      ary = @deck.bag.find_all {|x| x.kind[0] == kind}
-      ary = ary.sort_by {|x| x.order} if ordered
-      ary
+    def memory(kind)
+      @deck.bag.find_all {|x| x.kind[0] == kind}
     end
+
+    def used_memory(kind)
+      @deck.used.find_all {|x| x.kind[0] == kind}
+    end 
     
     def to_hash
       h = Hash.new
-      h[:entrance] = as_card_name(@deck.ary)
-      h[:hand] = as_card_name(@deck.hand)
-      h[:current] = as_card_name([@deck.current].compact)
-      h[:outlet] = as_card_name(@deck.outlet)
-      h[:costarea] = as_card_name(@deck.lost)
-      [:candy, :map, :gift, :kanban, :break, :red, :yellow, :blue].each do |key|
-        h[key] = as_card_name(memory(key))
+      h['entrance'] = as_card_name(@deck.ary)
+      h['hand'] = as_card_name(@deck.hand)
+      h['current'] = as_card_name([@deck.current].compact)
+      h['outlet'] = as_card_name(@deck.outlet)
+      h['costarea'] = as_card_name(@deck.lost)
+      [:candy, :map, :gift, :kanban, :break].each do |key|
+        h[key.to_s] = as_card_name(used_memory(key) + memory(key))
+      end
+      [:red, :yellow, :blue].each do |key|
+        h[key.to_s] = as_card_name(used_memory(key)) + [nil] + as_card_name(memory(key))
       end
       more = case it = @deck.prompt.last
       when Card
@@ -49,9 +53,9 @@ module Mogura
       else
         it
       end
-      p [@deck.prompt.first, it]
-      h[:prompt] = @deck.prompt.first
-      p [:prompt, h[:prompt]]
+      h['prompt'] = @deck.prompt.first
+      h['prompt_more'] = it
+      p [h['prompt'], h['prompt_more']]
       h
     end
 
@@ -77,9 +81,10 @@ module Mogura
 
   class StateTofu < Tofu::Tofu
     def to_html(context)
-      p @session.deck.prompt
+      p [:to_html, @session.deck.prompt]
       context.res_header('content-type', 'application/json')
       body = @session.to_hash.to_json
+      puts body
       context.res_body(body)
       context.done
     end
@@ -116,6 +121,23 @@ module Mogura
         if (0...(deck.hand.size)) === num
           card = deck.hand[num]
           deck.send(kind, card)
+        end
+      end
+    end
+
+    def do_prize(context, params)
+      p :do_prize
+      return if @session.finish?
+      deck = @session.deck
+      kind, opt = deck.prompt
+      case kind
+      when :prize
+        it ,= params['opt']
+        num = Integer(it) rescue nil
+        return unless num
+        if (0...(deck.outlet.size)) === num
+          card = deck.outlet[num]
+          deck.prize(card)
         end
       end
     end

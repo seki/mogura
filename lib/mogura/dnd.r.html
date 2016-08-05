@@ -114,7 +114,7 @@ var mogura = (function () {
         put_entrance(state.entrance, last_state.prompt);
         put_hand(state.hand);
         put_current(state.current, state.prompt);
-        put_outlet(state.outlet);
+        put_outlet(state.outlet, state.prompt);
         put_costarea(state.costarea);
     	put_candy(state.candy);
         put_gift(state.gift);
@@ -164,6 +164,29 @@ var mogura = (function () {
             if ( z % 10 === 1 ) { y = y + 180 ; x = 20}
         });        
     });    
+
+    var put_outlet_prize = (function (cards) {
+        var x = 20, y = 50, z = 1;
+        cards.forEach( function( name ) {
+            card = document.getElementById('mog-' + name);
+            card.src = name + ".png";
+            card.className = "mog-card"
+            card.style.top = y;
+            card.style.left = x;
+            card.style.zIndex = 60 + z;
+            card.draggable = true;
+            {
+                var url = '/api/?tofu_id=api;tofu_cmd=prize;opt=' + (z - 1);
+                card.onclick = function () {
+                    load_state(url);
+                };
+            };
+            x = x + 125;
+            z = z + 1;
+            if ( z % 10 === 1 ) { y = y + 180 ; x = 20}
+        });        
+    });    
+
 
     var put_entrance = (function (cards, prompt) {
         if ( prompt == 'search_candy' ) {
@@ -215,7 +238,12 @@ var mogura = (function () {
         });
     });    
 
-    var put_outlet = (function (cards) {
+    var put_outlet = (function (cards, prompt) {
+        if (prompt == 'prize') {
+            put_outlet_prize(cards);
+            return;
+        }
+
         var y = -40, z = 1;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
@@ -372,8 +400,12 @@ var mogura = (function () {
     });
 
     var put_red = (function (cards) {
-        var y = 240, z = 1;
+        var y = 240, z = 1, dy = 15;
         cards.forEach( function( name ) {
+            if (name == null) {
+                dy = 55;
+                return;
+            }
             card = document.getElementById('mog-' + name);
             card.src = name + ".png";
             card.className = "mog-card";
@@ -383,13 +415,17 @@ var mogura = (function () {
             card.draggable = false;
             card.onclick = null;
             z = z + 1;
-            y = y + 55;
+            y = y + dy;
         });
     });
 
     var put_yellow = (function (cards) {
-        var y = 240, z = 1;
+        var y = 240, z = 1, dy = 15;
         cards.forEach( function( name ) {
+            if (name == null) {
+                dy = 55;
+                return;
+            }
             card = document.getElementById('mog-' + name);
             card.src = name + ".png";
             card.className = "mog-card";
@@ -399,13 +435,17 @@ var mogura = (function () {
             card.draggable = false;
             card.onclick = null;
             z = z + 1;
-            y = y + 55;
+            y = y + dy;
         });
     });
 
     var put_blue = (function (cards) {
-        var y = 240, z = 1;
+        var y = 240, z = 1, dy = 15;
         cards.forEach( function( name ) {
+            if (name == null) {
+                dy = 55;
+                return;
+            }
             card = document.getElementById('mog-' + name);
             card.src = name + ".png";
             card.className = "mog-card";
@@ -415,7 +455,7 @@ var mogura = (function () {
             card.draggable = false;
             card.onclick = null;
             z = z + 1;
-            y = y + 55;
+            y = y + dy;
         });
     });
 
