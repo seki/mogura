@@ -55,7 +55,6 @@ module Mogura
       end
       h['prompt'] = @deck.prompt.first
       h['prompt_more'] = it
-      p [h['prompt'], h['prompt_more']]
       h
     end
 
@@ -81,10 +80,8 @@ module Mogura
 
   class StateTofu < Tofu::Tofu
     def to_html(context)
-      p [:to_html, @session.deck.prompt]
       context.res_header('content-type', 'application/json')
       body = @session.to_hash.to_json
-      puts body
       context.res_body(body)
       context.done
     end
@@ -98,10 +95,11 @@ module Mogura
       deck = @session.deck
       kind, opt = deck.prompt
       case kind
-      when :spread_else, :outlet_else
+      when :spread_else, :outlet_else, :prize
         return
       else
         begin
+          p [:it, kind, opt]
           deck.send(kind, opt)
         rescue Deck::EmptyError
           @session.empty
@@ -126,7 +124,6 @@ module Mogura
     end
 
     def do_prize(context, params)
-      p :do_prize
       return if @session.finish?
       deck = @session.deck
       kind, opt = deck.prompt

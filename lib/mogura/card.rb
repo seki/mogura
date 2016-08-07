@@ -1,7 +1,7 @@
 class Card
   @@ser = 0
 
-  ORDER = [:gift, :candy, :map, :kanban, :break, :red, :yellow, :blue]
+  ORDER = [:candy, :gift, :map, :kanban, :break, :red, :yellow, :blue]
 
   def self.create_from_line(line)
     ary = line.split(' ')
@@ -81,7 +81,7 @@ class Card
     @action = action
     @open = open
     @spread = spread
-    @order = [ORDER.index(kind[0]), kind[1], @cost] 
+    @order = [ORDER.index(kind[0]), kind[1], -@cost] 
   end
   attr_reader :ser, :name, :action, :order, :kind, :cost
 
@@ -223,9 +223,8 @@ EOS
   end
 
   def cost(n)
-    raise EmptyError if @ary.size < n
+    return if @ary.size < n
     @lost.push(* @ary.shift(n))
-  ensure
     @todo.shift
   end
 
