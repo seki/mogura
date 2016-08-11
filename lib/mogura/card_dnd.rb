@@ -54,7 +54,8 @@ module Mogura
         it
       end
       h['prompt'] = @deck.prompt.first
-      h['prompt_more'] = it
+      h['prompt_more'] = more
+      h['score'] = @deck.summary[:score]
       h
     end
 

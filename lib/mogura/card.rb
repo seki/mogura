@@ -344,7 +344,7 @@ EOS
   end
 
   def summary
-    bin = @bag.inject(Hash.new(0)) {|h, x| h[x.kind] += 1; h}
+    bin = (@bag + @used).inject(Hash.new(0)) {|h, x| h[x.kind] += 1; h}
     result = {
       :candy => bin[[:candy]],
       :gift => bin[[:gift]],

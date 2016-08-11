@@ -16,6 +16,14 @@ body {
     width: 200;
 }
 
+
+.mog-prompt {
+    position: absolute;
+    top: 30;
+    right: 0;
+    width: 200;
+}
+
 .mog-card {
     position: absolute;
     -moz-border-radius:10px;
@@ -44,6 +52,13 @@ body {
     transform: scale(0.5, 0.5);
 }
 
+.mog-card.mog-entrance-n  {
+    -moz-border-radius:5px;
+    -webkit-border-radius:5px;
+    border-radius:5px;
+    transform: rotate(-10deg) scale(0.5, 0.5);
+}
+
 .mog-card.mog-costarea  {
     -moz-border-radius:5px;
     -webkit-border-radius:5px;
@@ -69,6 +84,9 @@ body {
 
 <div class="mog-menu">
     <div id="mog-new">はじめから</div>
+</div>
+<div class="mog-prompt">
+    <div id="mog-message">はじめから</div>   
 </div>
 <div class="mog-field">
 <% card = "001" %>
@@ -111,7 +129,7 @@ var mogura = (function () {
     });
 
     var apply_state = (function ( state ) {
-        put_entrance(state.entrance, last_state.prompt);
+        put_entrance(state, last_state);
         put_hand(state.hand);
         put_current(state.current, state.prompt);
         put_outlet(state.outlet, state.prompt);
@@ -124,7 +142,13 @@ var mogura = (function () {
         put_red(state.red);
         put_yellow(state.yellow);
         put_blue(state.blue);
+        put_prompt(state);
         last_state = state;
+    });
+
+    var put_prompt = (function (state) {
+        message = document.getElementById('mog-message');
+        message.textContent = state.prompt + " / " + state.prompt_more + " / " + state.score;
     });
 
     var put_entrance_ex = (function (cards) {
@@ -188,23 +212,31 @@ var mogura = (function () {
     });    
 
 
-    var put_entrance = (function (cards, prompt) {
+    var put_entrance = (function (state, last_state) {
+        prompt = last_state.prompt;
+        cards = state.entrance;
         if ( prompt == 'search_candy' ) {
             put_entrance_ex(cards);
         } else if ( prompt == 'search_gift' ) {
             put_entrance_ex(cards);
         } else {
-            put_entrance_tail(cards);
+            put_entrance_tail(cards, state.prompt, state.prompt_more);
         }
     });
 
-    var put_entrance_tail = (function (cards) {
+    var put_entrance_tail = (function (cards, prompt, more) {
         var y = -30, z = 1, last;
+        var skip = cards.length + 1;
+        var classname = "mog-card mog-entrance";
+        if ((prompt == 'show') || (prompt == 'cost')) {
+            skip = skip - more;
+            if (skip <= 0) { classname = "mog-card mog-entrance-n";}
+        }
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
             last = card;
             card.src = "ura.png";
-            card.className = "mog-card mog-entrance";
+            card.className = classname;
             card.style.top = y;
             card.style.left = 195;
             card.style.zIndex = z;
@@ -212,7 +244,11 @@ var mogura = (function () {
             card.onclick = null;
             z = z + 1;
             y = y + 2;
-            if ( z % 10 === 1 ) { y = y + 2;}
+            if ( z == skip ) { 
+                y = y + 5;
+            } else if ( z > skip) {
+                y = y + 2;
+            }
         });
         if ( last ) {
             last.onclick = function () {
@@ -234,7 +270,7 @@ var mogura = (function () {
             card.onclick = null;
             z = z + 1;
             y = y + 2;
-            if ( z % 10 === 1 ) { y = y + 2;}
+            if ( z % 5 === 1 ) { y = y + 2;}
         });
     });    
 
