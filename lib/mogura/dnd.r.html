@@ -95,7 +95,7 @@ body {
 <div class="mog-field">
 <% card = "001" %>
 <% 60.times do |n|  %>
-<img class="mog-card" draggable=false id="mog-<%= card %>" src='<%= "%03d" % (n+1) %>.png' />
+<img class="mog-card" draggable=false id="mog-<%= card %>" src='<%= @image_path %><%= "%03d" % (n+1) %>.png' />
 <% card = card.succ %>
 <% end %>
 </div>
@@ -104,6 +104,10 @@ body {
 <script>
 
 var mogura = (function () {
+    var image_path = (function(name) {
+        return "<%= @image_path %>" + name + ".png";
+    });
+
     var last_state = {};
 
     var load_state = (function(url) {
@@ -166,7 +170,7 @@ var mogura = (function () {
         var x = 20, y = 50, z = 1;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
-            card.src = name + ".png";
+            card.src = image_path(name);
             card.className = "mog-card"
             card.style.top = y;
             card.style.left = x;
@@ -185,7 +189,7 @@ var mogura = (function () {
         var x = 20, y = 50, z = 1;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
-            card.src = name + ".png";
+            card.src = image_path(name);
             card.className = "mog-card"
             card.style.top = y;
             card.style.left = x;
@@ -204,7 +208,7 @@ var mogura = (function () {
         var x = 20, y = 50, z = 1;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
-            card.src = name + ".png";
+            card.src = image_path(name);
             card.className = "mog-card"
             card.style.top = y;
             card.style.left = x;
@@ -246,7 +250,7 @@ var mogura = (function () {
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
             last = card;
-            card.src = "ura.png";
+            card.src = image_path(name);
             card.className = classname;
             card.style.top = y;
             card.style.left = 195;
@@ -272,7 +276,7 @@ var mogura = (function () {
         var y = -40, z = 1;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
-            card.src = "ura.png";
+            card.src = image_path(name);
             card.className = "mog-card mog-costarea";
             card.style.top = y;
             card.style.left = 100;
@@ -294,7 +298,7 @@ var mogura = (function () {
         var y = -40, z = 1;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
-            card.src = name + ".png";
+            card.src = image_path(name);
             card.className = "mog-card mog-outlet";
             card.style.top = y;
             card.style.left = -10;
@@ -313,7 +317,7 @@ var mogura = (function () {
         var x = 400, z = 1;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
-            card.src = name + ".png";
+            card.src = image_path(name);
             card.className = "mog-card mog-shadow"
             card.style.top = 20;
             card.style.left = x;
@@ -334,7 +338,7 @@ var mogura = (function () {
         var x = 400, z = 1;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
-            card.src = name + ".png";
+            card.src = image_path(name);
             if ( prompt == 'cost' ) {
                 card.className = "mog-card mog-prompt-cost mog-shadow"
             } else {
@@ -357,7 +361,7 @@ var mogura = (function () {
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
             last = card;
-            card.src = name + ".png";
+            card.src = image_path(name);
             card.className = "mog-card";
             card.style.top = y;
             card.style.left = 10;
@@ -380,7 +384,7 @@ var mogura = (function () {
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
             last = card;
-            card.src = name + ".png";
+            card.src = image_path(name);
             card.className = "mog-card";
             card.style.top = y;
             card.style.left = 180;
@@ -402,7 +406,7 @@ var mogura = (function () {
         var y = 530, z = 1;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
-            card.src = name + ".png";
+            card.src = image_path(name);
             card.className = "mog-card";
             card.style.top = y;
             card.style.left = 10;
@@ -418,7 +422,7 @@ var mogura = (function () {
         var y = 530, z = 1;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
-            card.src = name + ".png";
+            card.src = image_path(name);
             card.className = "mog-card";
             card.style.top = y;
             card.style.left = 180;
@@ -434,7 +438,7 @@ var mogura = (function () {
         var y = 240, z = 1;
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
-            card.src = name + ".png";
+            card.src = image_path(name);
             card.className = "mog-card";
             card.style.top = y;
             card.style.left = 860;
@@ -457,7 +461,7 @@ var mogura = (function () {
             }
             z = z + 1;
             card = document.getElementById('mog-' + name);
-            card.src = name + ".png";
+            card.src = image_path(name);
             card.className = "mog-card";
             card.style.top = y;
             card.style.left = x;

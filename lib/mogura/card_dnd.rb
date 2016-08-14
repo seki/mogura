@@ -5,9 +5,15 @@ require 'mogura/card'
 
 module Mogura
   class MoguraSession < Tofu::Session
+    @@image_path = ""
+
+    def self.image_path=(path)
+      @@image_path = path
+    end
+
     def initialize(bartender, hint='')
       super
-      @base = BaseTofu.new(self)
+      @base = BaseTofu.new(@@image_path, self)
       @state = StateTofu.new(self)
       start_game
     end
@@ -158,6 +164,11 @@ module Mogura
 
   class BaseTofu < Tofu::Tofu
     set_erb(__dir__ + '/dnd.r.html')
+
+    def initialize(image_path, *args)
+      @image_path = image_path
+      super(*args)
+    end
 
     def do_new(context, params)
       @session.start_game

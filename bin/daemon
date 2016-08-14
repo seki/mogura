@@ -7,15 +7,11 @@ require 'mogura/card_dnd'
 
 Process.daemon(true) # nochdir
 
+Mogura::MoguraSession.image_path = "http://www.druby.org/mogura/"
+
 tofu = Tofu::Bartender.new(Mogura::MoguraSession, 'mg_8084')
 s = WEBrick::HTTPServer.new(:Port => 8084)
 s.mount("/", Tofu::Tofulet, tofu)
-
-Dir['../img/*'].each do |file_path|
-  next if File.directory?(file_path)
-  asset_path = file_path.sub(%r{.+/img}, "")
-  s.mount(asset_path, WEBrick::HTTPServlet::FileHandler, file_path)
-end
 
 s.start
 
