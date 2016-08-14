@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+
+require 'webrick'
+require 'webrick/httpserver'
+require 'mogura/card_dnd'
+
+Process.daemon(true) # nochdir
+
+tofu = Tofu::Bartender.new(Mogura::MoguraSession, 'mg_8084')
+s = WEBrick::HTTPServer.new(:Port => 8084)
+s.mount("/", Tofu::Tofulet, tofu)
+
+Dir['../img/*'].each do |file_path|
+  next if File.directory?(file_path)
+  asset_path = file_path.sub(%r{.+/img}, "")
+  s.mount(asset_path, WEBrick::HTTPServlet::FileHandler, file_path)
+end
+
+s.start
+
+=begin
+exit!(0) if fork
+Process::setsid
+exit!(0) if fork
+STDIN.reopen("/dev/null")
+STDOUT.reopen("/dev/null", "w")
+STDERR.reopen("/dev/null", "w")
+
+tofu = Tofu::Bartender.new(NZWiki::NZSession, 'nz_8083_2')
+s = WEBrick::HTTPServer.new(:Port => 8083)
+s.mount("/", Tofu::Tofulet, tofu)
+
+Dir['./lib/nzwiki/assets/**/*'].each do |file_path|
+  next if File.directory?(file_path)
+
+  asset_path = file_path.sub(%r{.+/assets}, "")
+  s.mount(asset_path, WEBrick::HTTPServlet::FileHandler, file_path)
+end
+
+s.start
+=end

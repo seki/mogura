@@ -100,7 +100,6 @@ module Mogura
         return
       else
         begin
-          p [:it, kind, opt]
           deck.send(kind, opt)
         rescue Deck::EmptyError
           @session.empty
@@ -158,14 +157,15 @@ module Mogura
   end
 
   class BaseTofu < Tofu::Tofu
-    set_erb('dnd.r.html')
+    set_erb(__dir__ + '/dnd.r.html')
 
     def do_new(context, params)
-      p :do_new
       @session.start_game
     end
   end
 end
+
+if __FILE__ == $0
 
 require 'webrick'
 require 'webrick/httpserver'
@@ -181,3 +181,5 @@ Dir['../../img/*'].each do |file_path|
 end
 
 s.start
+
+end

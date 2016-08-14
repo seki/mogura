@@ -37,6 +37,10 @@ body {
     -ms-user-select: none;
 }
 
+.mog-card.mog-shadow {
+    box-shadow: 0px 0px 20px -5px rgba(0, 200, 200, 0.8);
+}
+
 .mog-card.mog-prompt-cost  {
     transform: rotate(-10deg);
 }
@@ -83,15 +87,15 @@ body {
 <body>
 
 <div class="mog-menu">
-    <div id="mog-new">はじめから</div>
+    <div id="mog-new">new game</div>
 </div>
 <div class="mog-prompt">
-    <div id="mog-message">はじめから</div>   
+    <div id="mog-message">prompt</div>   
 </div>
 <div class="mog-field">
 <% card = "001" %>
 <% 60.times do |n|  %>
-<img class="mog-card" draggable=false id="mog-<%= card %>" src='ura.png' />
+<img class="mog-card" draggable=false id="mog-<%= card %>" src='<%= "%03d" % (n+1) %>.png' />
 <% card = card.succ %>
 <% end %>
 </div>
@@ -148,7 +152,14 @@ var mogura = (function () {
 
     var put_prompt = (function (state) {
         message = document.getElementById('mog-message');
-        message.textContent = state.prompt + " / " + state.prompt_more + " / " + state.score;
+        if ((state.prompt == 'outlet_else') || (state.prompt == 'spread_else')) {
+            prompt = 'choose';
+        } else if (state.prompt == 'show') {
+            prompt = 'open or spread';
+        } else {
+            prompt = state.prompt;
+        }
+        message.textContent = prompt + " / " + state.score + "pt.";
     });
 
     var put_entrance_ex = (function (cards) {
@@ -303,7 +314,7 @@ var mogura = (function () {
         cards.forEach( function( name ) {
             card = document.getElementById('mog-' + name);
             card.src = name + ".png";
-            card.className = "mog-card"
+            card.className = "mog-card mog-shadow"
             card.style.top = 20;
             card.style.left = x;
             card.style.zIndex = z;
@@ -325,9 +336,9 @@ var mogura = (function () {
             card = document.getElementById('mog-' + name);
             card.src = name + ".png";
             if ( prompt == 'cost' ) {
-                card.className = "mog-card mog-prompt-cost"
+                card.className = "mog-card mog-prompt-cost mog-shadow"
             } else {
-                card.className = "mog-card mog-prompt-else"
+                card.className = "mog-card mog-prompt-else mog-shadow"
             }
             card.style.top = 20;
             card.style.left = x;
