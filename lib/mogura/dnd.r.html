@@ -16,12 +16,40 @@ body {
     width: 200;
 }
 
-
-.mog-prompt {
+.mog-score {
     position: absolute;
     top: 30;
     right: 0;
     width: 200;
+}
+
+.mog-prompt {
+    z-index: 256;
+    position: absolute;
+    border-radius: 6px 6px 6px 6px;
+    box-shadow: 6px 6px 6px rgba(0,0,0,0.4);
+    padding: 20px;
+    top: 400;
+    left: 400;
+    width: 400;
+    height: 70;
+    background: #ffbbbb;
+    opacity: 0.7;
+    font-size: 24;
+    font-family: Optima,Segoe,Segoe UI,Candara,Calibri,Heletica Neue,Helvetica,Arial,sans-serif;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    transition: 100ms;
+}
+
+p#mog-message {
+    position: relative;
+    top: -20;
+    padding: 20;
+    color: red;
+    text-algin: center;
 }
 
 .mog-card {
@@ -87,10 +115,7 @@ body {
 <body>
 
 <div class="mog-menu">
-    <div id="mog-new">new game</div>
-</div>
-<div class="mog-prompt">
-    <div id="mog-message">prompt</div>   
+    <div id="mog-new">new game</div><div id="mog-score">score</div>
 </div>
 <div class="mog-field">
 <% card = "001" %>
@@ -98,6 +123,10 @@ body {
 <img class="mog-card" draggable=false id="mog-<%= card %>" src='<%= @image_path %><%= "%03d" % (n+1) %>.png' />
 <% card = card.succ %>
 <% end %>
+</div>
+
+<div class="mog-prompt" id="mog-prompt">
+  <p id="mog-message">prompt</p>
 </div>
 
 </body>
@@ -109,6 +138,7 @@ var mogura = (function () {
     });
 
     var last_state = {};
+    var to_id = null;
 
     var load_state = (function(url) {
         var x;
@@ -154,16 +184,35 @@ var mogura = (function () {
         last_state = state;
     });
 
+    var hide_prompt = (function () {
+        box = document.getElementById('mog-prompt');
+        box.style.display = 'none';
+    });
+
     var put_prompt = (function (state) {
+        if (to_id != null) {
+	   clearTimeout(to_id);
+	}
+        to_id = setTimeout(hide_prompt, 3000);
+        score = document.getElementById('mog-score');
+        score.textContent = state.score + " pt.";
+        box = document.getElementById('mog-prompt');
+	box.style.display = 'block';
         message = document.getElementById('mog-message');
-        if ((state.prompt == 'outlet_else') || (state.prompt == 'spread_else')) {
-            prompt = 'choose';
+        if (state.prompt == 'outlet_else')  {
+            prompt = 'get and outlet'
+	} else if (state.prompt == 'spread_else') {
+            prompt = 'get and shuffle';
         } else if (state.prompt == 'show') {
-            prompt = 'open or spread';
+            prompt = 'open ' + state.prompt_more; 
+        } else if (state.prompt == 'cost') {
+            prompt = 'pay cost ' + state.prompt_more; 
+        } else if (state.prompt == 'get') {
+            prompt = 'move into memory'
         } else {
             prompt = state.prompt;
         }
-        message.textContent = prompt + " / " + state.score + " pt.";
+        message.textContent = prompt;
     });
 
     var put_entrance_ex = (function (cards) {

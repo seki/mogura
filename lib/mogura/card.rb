@@ -30,7 +30,7 @@ class Card
   end
 
   def self.kanban
-    self.new([:kanban], 'kanban', 2, :search_gift, 1)
+    self.new([:kanban], 'kanban', 3, :search_gift, 2)
   end
 
   def self.candy
