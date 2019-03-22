@@ -264,7 +264,7 @@ var mogura = (function () {
             card.style.zIndex = 60 + z;
             card.draggable = true;
             {
-                var url = '/api/?tofu_id=api;tofu_cmd=prize;opt=' + (z - 1);
+                var url = '/api/?tofu_id=api&tofu_cmd=prize&opt=' + (z - 1);
                 card.onclick = function () {
                     load_state(url);
                 };
@@ -316,7 +316,7 @@ var mogura = (function () {
         });
         if ( last ) {
             last.onclick = function () {
-                load_state('/api/?tofu_id=api;tofu_cmd=it');
+                load_state('/api/?tofu_id=api&tofu_cmd=it');
             };
         }
     });
@@ -373,7 +373,7 @@ var mogura = (function () {
             card.style.zIndex = z;
             card.draggable = true;
             {
-                var url = '/api/?tofu_id=api;tofu_cmd=choose;opt=' + (z - 1);
+                var url = '/api/?tofu_id=api&tofu_cmd=choose&opt=' + (z - 1);
                 card.onclick = function () {
                     load_state(url);
                 };
@@ -398,7 +398,7 @@ var mogura = (function () {
             card.style.zIndex = z;
             card.draggable = true;
             card.onclick = function () {
-                load_state('/api/?tofu_id=api;tofu_cmd=it');
+                load_state('/api/?tofu_id=api&tofu_cmd=it');
             };
             x = x + 125;
             z = z + 1;
@@ -423,7 +423,7 @@ var mogura = (function () {
         if ( last ) {
             last.onclick = function () {
                 last_state = {};
-                load_state('/api/?tofu_id=api;tofu_cmd=candy');
+                load_state('/api/?tofu_id=api&tofu_cmd=candy');
             };
         }
     });
@@ -446,7 +446,7 @@ var mogura = (function () {
         if ( last ) {
             last.onclick = function () {
                 last_state = {};
-                load_state('/api/?tofu_id=api;tofu_cmd=gift');
+                load_state('/api/?tofu_id=api&tofu_cmd=gift');
             };
         }
     });
@@ -535,7 +535,7 @@ var mogura = (function () {
     });
 
     document.getElementById('mog-new').onclick = function () {
-        load_state('/api/?tofu_id=api;tofu_cmd=new');
+        load_state('/api/?tofu_id=api&tofu_cmd=new');
     };
 
     return { 
